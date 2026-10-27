@@ -1,20 +1,18 @@
-const { publicDecrypt } = require("crypto");
 const express = require("express");
 const http = require("http");
 const path = require("path");
 const socketio = require("socket.io");
-const path = require("path");
 
 const app = express();
-
 const server = http.createServer(app);
 const io = socketio(server);
 
 app.set("view engine", "ejs");
-app.set(express.static(path.join(__dirname, "public")));
+app.set("views", path.join(__dirname, "views"));
+app.use(express.static(path.join(__dirname, "public")));
 
-io.on("connection", function (socket) {
-  console.log("Connected");
+io.on("connection", (socket) => {
+  console.log("Connected:");
 });
 
 app.get("/", (req, res) => {
