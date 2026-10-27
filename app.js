@@ -18,7 +18,7 @@ io.on("connection", function (socket) {
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello Krishna Jii");
+  res.render("index");
 });
 
 const PORT = 3000;
