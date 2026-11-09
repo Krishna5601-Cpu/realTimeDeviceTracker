@@ -75,3 +75,11 @@ socket.on("receive-location", (data) => {
 });
 
 socket.on("user-disconnected", removeUserFromMap);
+
+// When I join, draw everyone who is already online
+socket.on("existing-locations", (locations) => {
+  for (const userId in locations) {
+    const { latitude, longitude } = locations[userId];
+    showUserOnMap(userId, latitude, longitude);
+  }
+});
