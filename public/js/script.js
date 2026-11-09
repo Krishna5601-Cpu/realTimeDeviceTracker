@@ -5,10 +5,10 @@ const socket = io();
 // Start zoomed out until we know where the user is
 const map = L.map("map").setView([0, 0], 2);
 
-L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   subdomains: "abcd",
   maxZoom: 19,
-  attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
+  attribution: "&copy; OpenStreetMap contributors",
 }).addTo(map);
 
 // State
