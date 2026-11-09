@@ -1,46 +1,77 @@
 const socket = io();
 
-if (navigator.geolocation) {
-  navigator.geolocation.watchPosition(
-    (postion) => {
-      const { latitude, longitude } = postion.coords;
-      socket.emit("send-location", { latitude, longitude });
-    },
-    (error) => {
-      console.log(error);
-    },
-    {
-      enableHighAccuracy: true,
-      maximumAge: 0,
-      timeout: 5000,
-    },
-  );
-}
+// Map setup
 
-const map = L.map("map").setView([0, 0], 16);
+// Start zoomed out until we know where the user is
+const map = L.map("map").setView([0, 0], 2);
 
-// Load map pictures (tiles) from OpenStreetMap
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+  subdomains: "abcd",
   maxZoom: 19,
-  attribution: "&copy; OpenStreetMap contributors",
+  attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
 }).addTo(map);
 
-const markers = {};
+// State
+
+const markersByUserId = {}; // one map marker per connected user
+let hasCenteredMap = false; // so we only center the map once
+
+// Helper functions
+
+// Move a user's marker, or create it if this is their first update
+function showUserOnMap(userId, latitude, longitude) {
+  if (markersByUserId[userId]) {
+    markersByUserId[userId].setLatLng([latitude, longitude]);
+  } else {
+    markersByUserId[userId] = L.marker([latitude, longitude]).addTo(map);
+  }
+}
+
+// Remove a user's marker when they leave
+function removeUserFromMap(userId) {
+  if (!markersByUserId[userId]) return;
+
+  map.removeLayer(markersByUserId[userId]);
+  delete markersByUserId[userId];
+}
+
+// Center the map on me, but only the first time
+function centerMapOnMe(latitude, longitude) {
+  if (hasCenteredMap) return;
+
+  map.setView([latitude, longitude], 16);
+  hasCenteredMap = true;
+}
+
+// Send my location to the server
+
+function sendMyLocation(position) {
+  const { latitude, longitude } = position.coords;
+  socket.emit("send-location", { latitude, longitude });
+}
+
+function handleLocationError(error) {
+  console.log("Could not get location:", error.message);
+}
+
+if (navigator.geolocation) {
+  navigator.geolocation.watchPosition(sendMyLocation, handleLocationError, {
+    enableHighAccuracy: true,
+    maximumAge: 0,
+    timeout: 5000,
+  });
+}
+
+// Listen for updates from the server
 
 socket.on("receive-location", (data) => {
   const { id, latitude, longitude } = data;
-  map.setView([latitude, longitude]);
 
-  if (markers[id]) {
-    markers[id].setLatLng([latitude, longitude]);
-  } else {
-    markers[id] = L.marker([latitude, longitude]).addTo(map);
+  showUserOnMap(id, latitude, longitude);
+
+  if (id === socket.id) {
+    centerMapOnMe(latitude, longitude);
   }
 });
 
-socket.on("user-disconnected", function (id) {
-  if (markers[id]) {
-    map.removeLayer(markers[id]);
-    delete markers[id];
-  }
-});
+socket.on("user-disconnected", removeUserFromMap);
