@@ -76,8 +76,6 @@ The fix that worked for me was VS Code port forwarding:
 5. Open the `https://...devtunnels.ms` link on your phone and tap **Allow** for location
 6. Open the same link on your laptop
 
-![VS Code Ports tab with port 3000 forwarded](screenshots/ports-tab.png)
-
 You should now see two markers. Walk around with the phone and the marker moves on the laptop.
 
 ![Phone view](screenshots/phone-view.png)
