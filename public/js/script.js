@@ -45,23 +45,41 @@ function centerMapOnMe(latitude, longitude) {
 
 // Send my location to the server
 
+// ---------- Send my location to the server ----------
+
 function sendMyLocation(position) {
   const { latitude, longitude } = position.coords;
+
+  hideStatus(); // location works, so clear any old warning
   socket.emit("send-location", { latitude, longitude });
 }
 
+// Turn the browser's error code into a message a person can understand
 function handleLocationError(error) {
   console.log("Could not get location:", error.message);
+
+  if (error.code === error.PERMISSION_DENIED) {
+    showStatus(
+      "Location is blocked. Allow it in your browser's site settings, then reload.",
+    );
+  } else if (error.code === error.POSITION_UNAVAILABLE) {
+    showStatus(
+      "Your location is unavailable. Check that GPS or Location is turned on.",
+    );
+  } else if (error.code === error.TIMEOUT) {
+    showStatus("Finding your location is taking a while. Still trying...");
+  }
 }
 
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(sendMyLocation, handleLocationError, {
     enableHighAccuracy: true,
     maximumAge: 0,
-    timeout: 5000,
+    timeout: 10000, // phones can take a few seconds to get a GPS fix
   });
+} else {
+  showStatus("This browser does not support location.");
 }
-
 // Listen for updates from the server
 
 socket.on("receive-location", (data) => {
@@ -83,3 +101,16 @@ socket.on("existing-locations", (locations) => {
     showUserOnMap(userId, latitude, longitude);
   }
 });
+
+const statusMessage = document.getElementById("status-message");
+
+// Show a message to the user at the top of the screen
+function showStatus(text) {
+  statusMessage.textContent = text;
+  statusMessage.hidden = false;
+}
+
+// Hide the message once everything works again
+function hideStatus() {
+  statusMessage.hidden = true;
+}
