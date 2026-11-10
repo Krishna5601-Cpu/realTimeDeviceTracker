@@ -36,7 +36,9 @@ app.get("/", (req, res) => {
   res.render("index");
 });
 
-const PORT = 3000;
+// Use the port given by the host, or 3000 on your own computer
+const PORT = process.env.PORT || 3000;
+
 server.listen(PORT, () => {
   console.log(`The server is running on http://localhost:${PORT}`);
 });
